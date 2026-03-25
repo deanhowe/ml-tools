@@ -1,0 +1,17 @@
+#!/bin/bash
+# ml-embed - Generate text embeddings using Ollama
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    echo "ml-embed - Generate text embeddings"
+    echo "Usage: ml-embed <text>"
+    echo "Uses: nomic-embed-text model"
+    exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+    echo "Usage: ml-embed <text>"
+    exit 1
+fi
+
+TEXT="$*"
+ollama run nomic-embed-text "$TEXT" 2>/dev/null | head -20

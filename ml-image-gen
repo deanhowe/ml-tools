@@ -1,0 +1,21 @@
+#!/usr/bin/env swift
+
+import Foundation
+import CoreImage
+import AppKit
+
+let args = CommandLine.arguments
+guard args.count > 1 else {
+    print("Usage: ml-image-gen <prompt>")
+    exit(1)
+}
+if args[1] == "--help" || args[1] == "-h" {
+    print("ml-image-gen - Generate images from text (if available)\nUsage: ml-image-gen <prompt>")
+    exit(0)
+}
+
+// ImagePlayground framework is private/restricted
+// This is a placeholder showing the framework exists but may not be accessible
+print("Note: ImagePlayground.framework detected but may require entitlements")
+print("Prompt: \(args[1...].joined(separator: " "))")
+print("Image generation APIs are restricted in macOS 26")

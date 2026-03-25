@@ -1,0 +1,41 @@
+#!/usr/bin/env swift
+
+import Foundation
+import CoreML
+
+let args = CommandLine.arguments
+
+if args.count < 2 || args[1] == "--help" || args[1] == "-h" {
+    print("""
+    ml-model-info - Inspect CoreML model details
+    Usage: ml-model-info <model.mlmodel>
+    Shows: inputs, outputs, metadata
+    """)
+    exit(args.count < 2 ? 1 : 0)
+}
+
+let modelPath = args[1]
+let url = URL(fileURLWithPath: modelPath)
+
+do {
+    let model = try MLModel(contentsOf: url)
+    let description = model.modelDescription
+    
+    print("Model: \(url.lastPathComponent)")
+    print("\nInputs:")
+    for input in description.inputDescriptionsByName {
+        print("  \(input.key): \(input.value.type)")
+    }
+    
+    print("\nOutputs:")
+    for output in description.outputDescriptionsByName {
+        print("  \(output.key): \(output.value.type)")
+    }
+    
+    if let metadata = description.metadata[.description] as? String {
+        print("\nDescription: \(metadata)")
+    }
+} catch {
+    print("Error: \(error.localizedDescription)")
+    exit(1)
+}

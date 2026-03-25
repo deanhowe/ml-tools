@@ -1,0 +1,26 @@
+#!/usr/bin/env swift
+
+import Foundation
+import NaturalLanguage
+
+let args = CommandLine.arguments
+guard args.count > 1 else {
+    print("Usage: ml-entities <text>")
+    exit(1)
+}
+if args[1] == "--help" || args[1] == "-h" {
+    print("ml-entities - Extract named entities (people, places, organizations)\nUsage: ml-entities <text>")
+    exit(0)
+}
+
+let text = args[1...].joined(separator: " ")
+let tagger = NLTagger(tagSchemes: [.nameType])
+tagger.string = text
+
+let options: NLTagger.Options = [.omitWhitespace, .omitPunctuation, .joinNames]
+tagger.enumerateTags(in: text.startIndex..<text.endIndex, unit: .word, scheme: .nameType, options: options) { tag, range in
+    if let tag = tag {
+        print("\(tag.rawValue): \(text[range])")
+    }
+    return true
+}

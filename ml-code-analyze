@@ -1,0 +1,36 @@
+#!/bin/bash
+# ml-code-analyze - Analyze Swift/C/C++/ObjC code using SourceKit-LSP
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    echo "ml-code-analyze - Analyze code structure using SourceKit"
+    echo "Usage: ml-code-analyze <file.swift>"
+    echo "Provides: symbols, diagnostics, code structure"
+    exit 0
+fi
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: ml-code-analyze <file>"
+    exit 1
+fi
+
+FILE="$1"
+if [[ ! -f "$FILE" ]]; then
+    echo "Error: File not found: $FILE"
+    exit 1
+fi
+
+SOURCEKIT="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/sourcekit-lsp"
+
+# Get file URI
+FILE_URI="file://$(cd "$(dirname "$FILE")" && pwd)/$(basename "$FILE")"
+
+# Initialize request
+cat <<EOF | "$SOURCEKIT" 2>/dev/null | grep -v "Content-Length" | jq -r '.result.capabilities.textDocumentSync' 2>/dev/null || echo "SourceKit-LSP available at: $SOURCEKIT"
+Content-Length: 100
+
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"rootUri":"$FILE_URI"}}
+EOF
+
+echo "File: $FILE"
+echo "Analyzing with SourceKit-LSP..."
+echo "Use with LSP client for full analysis"

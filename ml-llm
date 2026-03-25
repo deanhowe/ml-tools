@@ -1,0 +1,67 @@
+#!/bin/bash
+# ml-llm - Chat with local Ollama models
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    echo "ml-llm - Chat with local LLM via Ollama"
+    echo ""
+    echo "Usage: ml-llm [model] <prompt>"
+    echo ""
+    echo "Available models:"
+    ollama list | tail -n +2 | awk '{print "  " $1}'
+    echo ""
+    echo "Quick aliases:"
+    echo "  (none)    - qwen2.5-coder:7b (default, fast coding)"
+    echo "  chat      - qwen2.5:7b (general conversation)"
+    echo "  fast      - llama3.2:3b (fastest)"
+    echo "  quality   - deepseek-coder-v2:16b (better quality, slower)"
+    echo "  best      - codestral:22b (highest quality, slowest)"
+    echo ""
+    echo "Examples:"
+    echo "  ml-llm \"Write a Swift function\""
+    echo "  ml-llm chat \"Tell me about recursion\""
+    echo "  ml-llm fast \"Quick question\""
+    exit 0
+fi
+
+MODEL="qwen2.5-coder:7b"  # Default: fast, fits in 16GB RAM
+PROMPT=""
+
+if [[ $# -eq 0 ]]; then
+    echo "Usage: ml-llm [model] <prompt>"
+    exit 1
+fi
+
+# Check if first arg is a model name or alias
+case "$1" in
+    # Aliases
+    chat)
+        MODEL="qwen2.5:7b"
+        shift
+        ;;
+    fast)
+        MODEL="llama3.2:3b"
+        shift
+        ;;
+    quality)
+        MODEL="deepseek-coder-v2:16b"
+        shift
+        ;;
+    best)
+        MODEL="codestral:22b"
+        shift
+        ;;
+    # Direct model names
+    qwen2.5-coder:7b|qwen2.5:7b|llama3.2:3b|deepseek-coder-v2:16b|codestral:22b|nomic-embed-text:latest)
+        MODEL="$1"
+        shift
+        ;;
+esac
+
+PROMPT="$*"
+
+if [[ -z "$PROMPT" ]]; then
+    echo "Error: No prompt provided"
+    exit 1
+fi
+
+ollama run "$MODEL" "$PROMPT"

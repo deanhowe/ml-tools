@@ -1,0 +1,98 @@
+#!/usr/bin/env swift
+
+import Foundation
+import Speech
+
+struct CLI {
+    static func printHelp() {
+        print("""
+        ml-speech - Local ML speech recognition tool
+        
+        USAGE:
+            ml-speech <command> <audio-path> [options]
+        
+        COMMANDS:
+            transcribe <path>          Transcribe audio file to text
+            
+        OPTIONS:
+            --help, -h                 Show this help message
+            --locale <code>            Language locale (default: en-US)
+        
+        EXAMPLES:
+            ml-speech transcribe recording.m4a
+            ml-speech transcribe audio.wav --locale fr-FR
+        """)
+    }
+    
+    static func transcribe(_ path: String, locale: String = "en-US") {
+        let recognizer = SFSpeechRecognizer(locale: Locale(identifier: locale))
+        
+        guard let recognizer = recognizer, recognizer.isAvailable else {
+            print("Error: Speech recognition not available for locale \(locale)")
+            exit(1)
+        }
+        
+        let url = URL(fileURLWithPath: path)
+        let request = SFSpeechURLRecognitionRequest(url: url)
+        
+        var completed = false
+        
+        recognizer.recognitionTask(with: request) { result, error in
+            if let error = error {
+                print("Error: \(error.localizedDescription)")
+                completed = true
+                return
+            }
+            
+            if let result = result {
+                if result.isFinal {
+                    print("Transcription:")
+                    print(result.bestTranscription.formattedString)
+                    completed = true
+                }
+            }
+        }
+        
+        // Wait for completion
+        while !completed {
+            RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
+        }
+    }
+}
+
+let args = CommandLine.arguments
+
+guard args.count > 1 else {
+    CLI.printHelp()
+    exit(1)
+}
+
+let command = args[1]
+
+if command == "--help" || command == "-h" {
+    CLI.printHelp()
+    exit(0)
+}
+
+guard args.count > 2 else {
+    print("Error: Missing audio path")
+    CLI.printHelp()
+    exit(1)
+}
+
+let audioPath = args[2]
+var locale = "en-US"
+
+// Parse optional locale
+if args.count > 4 && args[3] == "--locale" {
+    locale = args[4]
+}
+
+switch command {
+case "transcribe":
+    CLI.transcribe(audioPath, locale: locale)
+default:
+    print("Error: Unknown command '\(command)'")
+    CLI.printHelp()
+    exit(1)
+}

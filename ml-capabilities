@@ -1,0 +1,20 @@
+#!/bin/bash
+# List all available ML/AI capabilities on this machine
+
+echo "=== macOS 26 ML/AI Capabilities ==="
+echo
+echo "PUBLIC FRAMEWORKS:"
+ls -1 /System/Library/Frameworks/ | grep -iE "ML|Intelligence|Natural|Vision|Speech|Sound|Translation|Foundation" | wc -l | xargs echo "  Count:"
+echo
+echo "PRIVATE FRAMEWORKS (Apple Intelligence):"
+ls -1 /System/Library/PrivateFrameworks/ | grep -iE "Intelligence|ML|Language|Generation" | wc -l | xargs echo "  Count:"
+echo
+echo "OLLAMA MODELS:"
+ollama list 2>/dev/null | tail -n +2 | awk '{print "  - " $1}'
+echo
+echo "XCODE TOOLS:"
+echo "  - SourceKit-LSP: $(xcrun --find sourcekit-lsp 2>/dev/null)"
+echo "  - Swift: $(swift --version 2>/dev/null | head -1)"
+echo
+echo "ML TOOLS INSTALLED:"
+ls -1 /Users/deanhowe/PROJECTS/OBSECURE_PROJECTS/ml-tools/ml-* 2>/dev/null | wc -l | xargs echo "  Count:"

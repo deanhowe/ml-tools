@@ -1,0 +1,38 @@
+#!/usr/bin/env swift
+
+import Foundation
+import Translation
+
+let args = CommandLine.arguments
+guard args.count > 3 else {
+    print("Usage: ml-translate <from-lang> <to-lang> <text>")
+    print("Example: ml-translate en es \"Hello world\"")
+    exit(1)
+}
+if args[1] == "--help" || args[1] == "-h" {
+    print("ml-translate - Translate text between languages\nUsage: ml-translate <from> <to> <text>\nExample: ml-translate en es \"Hello world\"")
+    exit(0)
+}
+
+let fromLang = args[1]
+let toLang = args[2]
+let text = args[3...].joined(separator: " ")
+
+Task {
+    do {
+        let config = TranslationSession.Configuration(
+            source: Locale.Language(identifier: fromLang),
+            target: Locale.Language(identifier: toLang)
+        )
+        
+        let session = TranslationSession(configuration: config)
+        let response = try await session.translate(text)
+        print(response.targetText)
+        exit(0)
+    } catch {
+        print("Error: \(error.localizedDescription)")
+        exit(1)
+    }
+}
+
+RunLoop.main.run()

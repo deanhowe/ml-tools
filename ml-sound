@@ -1,0 +1,61 @@
+#!/usr/bin/env swift
+
+import Foundation
+import SoundAnalysis
+
+let args = CommandLine.arguments
+guard args.count > 1 else {
+    print("Usage: ml-sound <audio-file>")
+    exit(1)
+}
+if args[1] == "--help" || args[1] == "-h" {
+    print("ml-sound - Analyze audio content (classify sounds)\nUsage: ml-sound <audio-file>")
+    exit(0)
+}
+
+let url = URL(fileURLWithPath: args[1])
+
+do {
+    let analyzer = try SNAudioFileAnalyzer(url: url)
+    let request = try SNClassifySoundRequest(classifierIdentifier: .version1)
+    
+    var done = false
+    
+    try analyzer.add(request, withObserver: ResultsObserver { results in
+        for result in results {
+            if let classification = result as? SNClassificationResult {
+                for c in classification.classifications.prefix(3) {
+                    print("\(c.identifier): \(Int(c.confidence * 100))%")
+                }
+            }
+        }
+        done = true
+    })
+    
+    analyzer.analyze()
+    
+    while !done {
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
+    }
+} catch {
+    print("Error: \(error.localizedDescription)")
+    exit(1)
+}
+
+class ResultsObserver: NSObject, SNResultsObserving {
+    let handler: ([SNResult]) -> Void
+    
+    init(handler: @escaping ([SNResult]) -> Void) {
+        self.handler = handler
+    }
+    
+    func request(_ request: SNRequest, didProduce result: SNResult) {
+        handler([result])
+    }
+    
+    func request(_ request: SNRequest, didFailWithError error: Error) {
+        print("Error: \(error.localizedDescription)")
+    }
+    
+    func requestDidComplete(_ request: SNRequest) {}
+}

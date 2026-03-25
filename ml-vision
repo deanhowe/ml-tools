@@ -1,0 +1,175 @@
+#!/usr/bin/env swift
+
+import Foundation
+import Vision
+import CoreImage
+import AppKit
+
+struct CLI {
+    static func printHelp() {
+        print("""
+        ml-vision - Local ML vision/image processing tool
+        
+        USAGE:
+            ml-vision <command> <image-path> [options]
+        
+        COMMANDS:
+            classify <path>            Classify image content
+            text <path>                Extract text from image (OCR)
+            faces <path>               Detect faces in image
+            objects <path>             Detect objects in image
+            
+        OPTIONS:
+            --help, -h                 Show this help message
+        
+        EXAMPLES:
+            ml-vision classify photo.jpg
+            ml-vision text document.png
+            ml-vision faces group.jpg
+        """)
+    }
+    
+    static func loadImage(_ path: String) -> CIImage? {
+        guard let nsImage = NSImage(contentsOfFile: path) else {
+            print("Error: Cannot load image at \(path)")
+            return nil
+        }
+        
+        guard let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            print("Error: Cannot convert image")
+            return nil
+        }
+        
+        return CIImage(cgImage: cgImage)
+    }
+    
+    static func classifyImage(_ path: String) {
+        guard let image = loadImage(path) else { return }
+        
+        let request = VNClassifyImageRequest { request, error in
+            if let error = error {
+                print("Error: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let observations = request.results as? [VNClassificationObservation] else { return }
+            
+            print("Classifications:")
+            for observation in observations.prefix(5) {
+                let confidence = Int(observation.confidence * 100)
+                print("  \(observation.identifier): \(confidence)%")
+            }
+        }
+        
+        let handler = VNImageRequestHandler(ciImage: image, options: [:])
+        try? handler.perform([request])
+    }
+    
+    static func extractText(_ path: String) {
+        guard let image = loadImage(path) else { return }
+        
+        let request = VNRecognizeTextRequest { request, error in
+            if let error = error {
+                print("Error: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let observations = request.results as? [VNRecognizedTextObservation] else { return }
+            
+            print("Text found:")
+            for observation in observations {
+                guard let topCandidate = observation.topCandidates(1).first else { continue }
+                print("  \(topCandidate.string)")
+            }
+        }
+        
+        request.recognitionLevel = .accurate
+        
+        let handler = VNImageRequestHandler(ciImage: image, options: [:])
+        try? handler.perform([request])
+    }
+    
+    static func detectFaces(_ path: String) {
+        guard let image = loadImage(path) else { return }
+        
+        let request = VNDetectFaceRectanglesRequest { request, error in
+            if let error = error {
+                print("Error: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let observations = request.results as? [VNFaceObservation] else { return }
+            
+            print("Faces detected: \(observations.count)")
+            for (index, face) in observations.enumerated() {
+                let confidence = Int(face.confidence * 100)
+                print("  Face \(index + 1): confidence \(confidence)%")
+            }
+        }
+        
+        let handler = VNImageRequestHandler(ciImage: image, options: [:])
+        try? handler.perform([request])
+    }
+    
+    static func detectObjects(_ path: String) {
+        guard let image = loadImage(path) else { return }
+        
+        let request = VNDetectRectanglesRequest { request, error in
+            if let error = error {
+                print("Error: \(error.localizedDescription)")
+                return
+            }
+            
+            guard let observations = request.results as? [VNRectangleObservation] else { return }
+            
+            print("Objects detected: \(observations.count)")
+            for (index, rect) in observations.enumerated() {
+                let confidence = Int(rect.confidence * 100)
+                print("  Object \(index + 1): confidence \(confidence)%")
+            }
+        }
+        
+        let handler = VNImageRequestHandler(ciImage: image, options: [:])
+        try? handler.perform([request])
+    }
+}
+
+let args = CommandLine.arguments
+
+guard args.count > 1 else {
+    CLI.printHelp()
+    exit(1)
+}
+
+let command = args[1]
+
+if command == "--help" || command == "-h" {
+    CLI.printHelp()
+    exit(0)
+}
+
+guard args.count > 2 else {
+    print("Error: Missing image path")
+    CLI.printHelp()
+    exit(1)
+}
+
+let imagePath = args[2]
+
+switch command {
+case "classify":
+    CLI.classifyImage(imagePath)
+case "text":
+    CLI.extractText(imagePath)
+case "faces":
+    CLI.detectFaces(imagePath)
+case "objects":
+    CLI.detectObjects(imagePath)
+default:
+    print("Error: Unknown command '\(command)'")
+    CLI.printHelp()
+    exit(1)
+}
+
+// Keep process alive for async completion
+RunLoop.main.run(until: Date(timeIntervalSinceNow: 2))

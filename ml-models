@@ -1,0 +1,51 @@
+#!/bin/bash
+# ml-models - Quick model switcher and info
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    echo "ml-models - Manage Ollama models"
+    echo ""
+    echo "Usage:"
+    echo "  ml-models           - List all models"
+    echo "  ml-models info      - Show model details"
+    echo "  ml-models switch    - Interactive model selector"
+    exit 0
+fi
+
+case "$1" in
+    info)
+        echo "=== Installed Models ==="
+        ollama list
+        echo ""
+        echo "=== Quick Reference ==="
+        echo "Fast (fits in RAM):"
+        echo "  llama3.2:3b         - 2GB, fastest general"
+        echo "  qwen2.5-coder:7b    - 4.7GB, fast coding"
+        echo "  qwen2.5:7b          - 4.7GB, fast chat"
+        echo ""
+        echo "Quality (memory-mapped):"
+        echo "  deepseek-coder-v2   - 8.9GB, better quality"
+        echo "  codestral:22b       - 12GB, best quality"
+        echo ""
+        echo "Usage:"
+        echo "  ml-llm \"prompt\"              - qwen-coder (default)"
+        echo "  ml-llm chat \"prompt\"         - qwen general"
+        echo "  ml-llm fast \"prompt\"         - llama3.2"
+        echo "  ml-llm quality \"prompt\"      - deepseek"
+        echo "  ml-llm best \"prompt\"         - codestral"
+        ;;
+    switch)
+        echo "Select model:"
+        select model in $(ollama list | tail -n +2 | awk '{print $1}'); do
+            if [[ -n "$model" ]]; then
+                echo "Selected: $model"
+                echo "Test it: ml-llm $model \"Hello\""
+                break
+            fi
+        done
+        ;;
+    *)
+        ollama list
+        echo ""
+        echo "Run 'ml-models info' for details"
+        ;;
+esac

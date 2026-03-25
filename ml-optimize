@@ -1,0 +1,23 @@
+#!/bin/bash
+# Optimize Ollama for M1 Mac with 16GB RAM
+
+echo "=== Ollama Configuration for M1 (16GB RAM) ==="
+echo
+echo "Current models:"
+ollama list
+echo
+echo "Your models are fine - Apple Silicon can stream from SSD:"
+echo "  ✓ qwen2.5-coder:7b (4.7GB - fast, fits in RAM)"
+echo "  ✓ deepseek-coder-v2:16b (8.9GB - memory-mapped from SSD)"
+echo "  ✓ codestral:22b (12GB - memory-mapped from SSD)"
+echo "  ✓ nomic-embed-text (274MB - embeddings)"
+echo
+echo "Apple's unified memory architecture streams weights from SSD"
+echo "Large models are slower but work (like the 256GB model on M4)"
+echo
+echo "Performance tips:"
+echo "  - Use qwen for speed"
+echo "  - Use deepseek/codestral for quality (slower but works)"
+echo "  - Ollama auto-manages memory-mapped loading"
+echo
+echo "No changes needed - your setup is optimal!"

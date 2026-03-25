@@ -1,0 +1,34 @@
+#!/usr/bin/env swift
+
+import Foundation
+import Vision
+import CoreImage
+import AppKit
+
+let args = CommandLine.arguments
+guard args.count > 1 else {
+    print("Usage: ml-objects <image>")
+    exit(1)
+}
+if args[1] == "--help" || args[1] == "-h" {
+    print("ml-objects - Detect objects/rectangles in image\nUsage: ml-objects <image>")
+    exit(0)
+}
+
+guard let nsImage = NSImage(contentsOfFile: args[1]),
+      let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+    print("Error: Cannot load image")
+    exit(1)
+}
+
+let image = CIImage(cgImage: cgImage)
+let request = VNDetectRectanglesRequest { request, error in
+    guard let observations = request.results as? [VNRectangleObservation] else { return }
+    print("Objects: \(observations.count)")
+    for (i, obj) in observations.enumerated() {
+        print("Object \(i+1): \(Int(obj.confidence * 100))%")
+    }
+}
+
+try? VNImageRequestHandler(ciImage: image).perform([request])
+RunLoop.main.run(until: Date(timeIntervalSinceNow: 1))

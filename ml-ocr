@@ -1,0 +1,36 @@
+#!/usr/bin/env swift
+
+import Foundation
+import Vision
+import CoreImage
+import AppKit
+
+let args = CommandLine.arguments
+guard args.count > 1 else {
+    print("Usage: ml-ocr <image>")
+    exit(1)
+}
+if args[1] == "--help" || args[1] == "-h" {
+    print("ml-ocr - Extract text from image\nUsage: ml-ocr <image>")
+    exit(0)
+}
+
+guard let nsImage = NSImage(contentsOfFile: args[1]),
+      let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+    print("Error: Cannot load image")
+    exit(1)
+}
+
+let image = CIImage(cgImage: cgImage)
+let request = VNRecognizeTextRequest { request, error in
+    guard let observations = request.results as? [VNRecognizedTextObservation] else { return }
+    for obs in observations {
+        if let text = obs.topCandidates(1).first {
+            print(text.string)
+        }
+    }
+}
+request.recognitionLevel = .accurate
+
+try? VNImageRequestHandler(ciImage: image).perform([request])
+RunLoop.main.run(until: Date(timeIntervalSinceNow: 2))

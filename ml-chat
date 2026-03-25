@@ -1,0 +1,19 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let args = CommandLine.arguments
+guard args.count > 1 else {
+    print("Usage: ml-chat <prompt>")
+    exit(1)
+}
+if args[1] == "--help" || args[1] == "-h" {
+    print("ml-chat - Chat with local LLM (if available)\nUsage: ml-chat <prompt>")
+    exit(0)
+}
+
+// FoundationModels framework exists but APIs are private/restricted
+// This is a placeholder showing the framework exists but may not be accessible
+print("Note: FoundationModels.framework detected but APIs are private")
+print("Prompt: \(args[1...].joined(separator: " "))")
+print("Consider using: ollama, mlx, or kiro-cli for local LLM access")

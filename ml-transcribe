@@ -1,0 +1,39 @@
+#!/usr/bin/env swift
+
+import Foundation
+import Speech
+
+let args = CommandLine.arguments
+guard args.count > 1 else {
+    print("Usage: ml-transcribe <audio> [--locale en-US]")
+    exit(1)
+}
+if args[1] == "--help" || args[1] == "-h" {
+    print("ml-transcribe - Convert speech to text\nUsage: ml-transcribe <audio> [--locale en-US]")
+    exit(0)
+}
+
+var locale = "en-US"
+if args.count > 3 && args[2] == "--locale" {
+    locale = args[3]
+}
+
+guard let recognizer = SFSpeechRecognizer(locale: Locale(identifier: locale)), recognizer.isAvailable else {
+    print("Error: Speech recognition not available")
+    exit(1)
+}
+
+let url = URL(fileURLWithPath: args[1])
+let request = SFSpeechURLRecognitionRequest(url: url)
+var done = false
+
+recognizer.recognitionTask(with: request) { result, error in
+    if let result = result, result.isFinal {
+        print(result.bestTranscription.formattedString)
+        done = true
+    }
+}
+
+while !done {
+    RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.1))
+}

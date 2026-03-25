@@ -1,0 +1,35 @@
+#!/usr/bin/env swift
+
+import Foundation
+import Vision
+import CoreImage
+import AppKit
+
+let args = CommandLine.arguments
+guard args.count > 1 else {
+    print("Usage: ml-barcode <image>")
+    exit(1)
+}
+if args[1] == "--help" || args[1] == "-h" {
+    print("ml-barcode - Detect and read barcodes/QR codes\nUsage: ml-barcode <image>")
+    exit(0)
+}
+
+guard let nsImage = NSImage(contentsOfFile: args[1]),
+      let cgImage = nsImage.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+    print("Error: Cannot load image")
+    exit(1)
+}
+
+let image = CIImage(cgImage: cgImage)
+let request = VNDetectBarcodesRequest { request, error in
+    guard let observations = request.results as? [VNBarcodeObservation] else { return }
+    for barcode in observations {
+        if let payload = barcode.payloadStringValue {
+            print("\(barcode.symbology.rawValue): \(payload)")
+        }
+    }
+}
+
+try? VNImageRequestHandler(ciImage: image).perform([request])
+RunLoop.main.run(until: Date(timeIntervalSinceNow: 1))

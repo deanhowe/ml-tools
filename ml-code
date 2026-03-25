@@ -1,0 +1,18 @@
+#!/bin/bash
+# ml-code - Code generation/completion using local LLM
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    echo "ml-code - Generate code using local LLM"
+    echo "Usage: ml-code <prompt>"
+    echo "Example: ml-code \"Write a Swift function to sort an array\""
+    exit 0
+fi
+
+if [[ $# -eq 0 ]]; then
+    echo "Usage: ml-code <prompt>"
+    exit 1
+fi
+
+PROMPT="$*"
+# Use fast model by default (qwen fits in 16GB RAM)
+ollama run qwen2.5-coder:7b "$PROMPT"
