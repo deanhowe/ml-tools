@@ -1,15 +1,2 @@
-.DS_Store
-*.swp
-*.swo
-*.log
-*.tmp
-*.bak
-*.sqlite
-*.db
-.env
-node_modules/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.md
 
